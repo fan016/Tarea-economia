@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EcoSim: La Ruta del Cacao</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --panel-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #3b82f6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --nature: #06b6d4;
+            --society: #f97316;
+            --state-color: #8b5cf6;
+            --transition-speed: 0.8s;
+        }
+
+        * { 
+            box-sizing: border-box; margin: 0; padding: 0; 
+            font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            display: flex; justify-content: center;
+            height: 100dvh; overflow: hidden; 
+            transition: background-color var(--transition-speed) ease;
+        }
+
+        #app {
+            width: 100%; max-width: 480px; height: 100dvh;
+            display: flex; flex-direction: column;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(5px);
+            box-shadow: 0 0 40px rgba(0,0,0,0.8);
+            position: relative;
+        }
+
+        /* CABECERA */
+        header {
+            padding: 15px 15px 10px 15px;
+            background: rgba(30, 41, 59, 0.9);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            z-index: 10;
+            display: none; /* Oculto en la pantalla de inicio */
+        }
+
+        .header-title { text-align: center; font-size: 12px; font-weight: 700; color: var(--text-muted); letter-spacing: 1px; margin-bottom: 10px; text-transform: uppercase;}
+
+        /* BARRAS DE DIMENSIÓN */
+        .dimension-bars { display: flex; flex-direction: column; gap: 8px; }
+        .dim-row { display: flex; align-items: center; font-size: 11px; font-weight: 600;}
+        .dim-label { width: 85px; text-align: left; }
+        .bar-bg { flex-grow: 1; height: 10px; background: #0f172a; border-radius: 5px; overflow: hidden; margin: 0 10px; border: 1px solid #334155;}
+        .bar-fill { height: 100%; transition: width 0.5s ease, background 0.5s ease; width: 50%; }
+        
+        .bar-economy { background: var(--success); }
+        .bar-society { background: var(--society); }
+        .bar-nature { background: var(--nature); }
+
+        /* ÁREA DE CONTENIDO */
+        main {
+            flex-grow: 1; overflow-y: auto;
+            padding: 20px; padding-bottom: 120px; 
+            display: flex; flex-direction: column;
+        }
+
+        /* PANTALLA DE INICIO (INTRO) */
+        #intro-screen {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100%; text-align: center; padding: 20px;
+        }
+        #intro-screen h1 { color: var(--primary); font-size: 24px; margin-bottom: 15px; }
+        #intro-screen p { font-size: 14px; color: var(--text-muted); margin-bottom: 30px; line-height: 1.6;}
+        
+        .input-group { width: 100%; margin-bottom: 30px; }
+        .input-group label { display: block; text-align: left; font-size: 12px; margin-bottom: 5px; color: #cbd5e1;}
+        .input-group input {
+            width: 100%; padding: 15px; border-radius: 10px; border: 2px solid #334155;
+            background: #0f172a; color: white; font-size: 16px; outline: none; transition: border 0.2s;
+        }
+        .input-group input:focus { border-color: var(--primary); }
+
+        /* ESCENARIO VISUAL */
+        #scene-container {
+            width: 100%; height: 140px;
+            border-radius: 15px; margin-bottom: 20px;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 70px; background: #0f172a;
+            border: 2px dashed #334155;
+            transition: all var(--transition-speed) ease;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+            position: relative; overflow: hidden;
+        }
+        #scene-icon { z-index: 2; transition: transform 0.5s ease; }
+
+        /* TARJETA DE DIÁLOGO */
+        .character-card {
+            display: flex; align-items: flex-start;
+            background: var(--panel-bg); padding: 15px; border-radius: 15px;
+            margin-bottom: 15px; border-left: 4px solid var(--primary);
+            animation: slideIn 0.4s ease forwards;
+        }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+
+        .avatar {
+            width: 45px; height: 45px; display: flex; justify-content: center; align-items: center;
+            font-size: 24px; margin-right: 15px; flex-shrink: 0; background: #0f172a; border-radius: 50%;
+            border: 2px solid var(--primary);
+        }
+
+        .dialogue { flex: 1; }
+        .dialogue strong { display: block; font-size: 14px; margin-bottom: 4px; color: var(--primary);}
+        .dialogue p { text-align: left; font-size: 14px; color: #e2e8f0; line-height: 1.5;}
+
+        /* ESTILO ESPECIAL PARA EL ESTADO (Documento Oficial) */
+        .character-card.state-doc {
+            border-left: none; border: 2px solid var(--state-color);
+            background: rgba(139, 92, 246, 0.1);
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
+        }
+        .character-card.state-doc .avatar { border-color: var(--state-color); }
+        .character-card.state-doc strong { color: var(--state-color); text-transform: uppercase; font-size: 12px; letter-spacing: 1px;}
+        .character-card.state-doc p { font-family: 'Courier New', Courier, monospace; font-weight: bold; color: #ddd6fe;}
+
+        /* OPCIONES (Decisiones) */
+        .options-container { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
+        
+        .decision-btn {
+            background: #334155; color: white; border: 2px solid #475569;
+            padding: 15px; border-radius: 12px; font-size: 14px; font-weight: 600;
+            text-align: left; cursor: pointer; transition: all 0.2s ease;
+        }
+        .decision-btn:active { transform: scale(0.98); background: #475569; }
+
+        /* BOTÓN FIJO */
+        footer {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            display: flex; justify-content: center;
+            background: linear-gradient(to top, #0f172a 90%, transparent);
+            z-index: 999; padding-bottom: env(safe-area-inset-bottom);
+        }
+        
+        #btn-action {
+            background: var(--primary); color: white; border: none; padding: 16px; font-size: 16px;
+            font-weight: 700; border-radius: 12px; width: calc(100% - 30px); max-width: 450px;
+            margin: 15px; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+            transition: transform 0.1s;
+        }
+        #btn-action:active { transform: scale(0.96); }
+
+    </style>
+</head>
+<body>
+
+    <div id="app">
+        <!-- CABECERA -->
+        <header id="top-header">
+            <div class="header-title">Dimensiones de la Empresa</div>
+            <div class="dimension-bars">
+                <div class="dim-row">
+                    <div class="dim-label">Economía 💰</div>
+                    <div class="bar-bg"><div class="bar-fill bar-economy" id="bar-eco" style="width: 50%;"></div></div>
+                </div>
+                <div class="dim-row">
+                    <div class="dim-label">Sociedad 🏘️</div>
+                    <div class="bar-bg"><div class="bar-fill bar-society" id="bar-soc" style="width: 50%;"></div></div>
+                </div>
+                <div class="dim-row">
+                    <div class="dim-label">Naturaleza 🌿</div>
+                    <div class="bar-bg"><div class="bar-fill bar-nature" id="bar-nat" style="width: 50%;"></div></div>
+                </div>
+            </div>
+        </header>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main id="main-content">
+            
+            <!-- PANTALLA DE BIENVENIDA -->
+            <div id="intro-screen">
+                <h1>🌱 EcoSim: El Dilema del Cacao</h1>
+                <p>Bienvenido a la simulación de Ingeniería Agroindustrial. Has sido contratado como el nuevo <b>Gerente General</b> de la planta procesadora más grande de la región. Tu objetivo es tomar decisiones económicas, pero recuerda: cada acción afecta a la sociedad y al medio ambiente.</p>
+                
+                <div class="input-group">
+                    <label>Ingresa tu nombre de Gerente:</label>
+                    <input type="text" id="input-name" placeholder="Ej. Francisco" maxlength="15">
+                </div>
+            </div>
+
+            <!-- ESCENARIO VISUAL (Oculto en la intro) -->
+            <div id="game-ui" style="display: none; flex-direction: column; height: 100%;">
+                <div id="scene-container">
+                    <div id="scene-icon">🌍</div>
+                </div>
+
+                <div class="character-card" id="character-card">
+                    <div class="avatar" id="char-avatar">👨🏽‍💼</div>
+                    <div class="dialogue">
+                        <strong id="char-name">Sistema</strong>
+                        <p id="story-text">Cargando...</p>
+                    </div>
+                </div>
+
+                <div class="options-container" id="options-container"></div>
+            </div>
+        </main>
+
+        <!-- BOTÓN PRINCIPAL -->
+        <footer>
+            <button id="btn-action">Iniciar Simulación ➔</button>
+        </footer>
+    </div>
+
+    <script>
+        // --- 1. ESTADO GLOBAL ---
+        let playerName = "Gerente";
+        let state = {
+            eco: 50, soc: 50, nat: 50, chapter: 0
+        };
+
+        // --- 2. REFERENCIAS AL DOM ---
+        const ui = {
+            header: document.getElementById('top-header'),
+            intro: document.getElementById('intro-screen'),
+            gameUI: document.getElementById('game-ui'),
+            inputName: document.getElementById('input-name'),
+            barEco: document.getElementById('bar-eco'),
+            barSoc: document.getElementById('bar-soc'),
+            barNat: document.getElementById('bar-nat'),
+            charCard: document.getElementById('character-card'),
+            charAvatar: document.getElementById('char-avatar'),
+            charName: document.getElementById('char-name'),
+            storyText: document.getElementById('story-text'),
+            optionsContainer: document.getElementById('options-container'),
+            btn: document.getElementById('btn-action'),
+            mainContent: document.getElementById('main-content'),
+            sceneContainer: document.getElementById('scene-container'),
+            sceneIcon: document.getElementById('scene-icon'),
+            body: document.body
+        };
+
+        // --- 3. LA HISTORIA ---
+        const storyData = [
+            {
+                title: "Capítulo 1: La Oportunidad",
+                charName: "El Agricultor",
+                avatar: "👨🏽‍🌾",
+                text: "¡Hola, Gerente [NAME]! La demanda de chocolate está por las nubes. Si procesamos todo el cacao posible, nos haremos ricos. ¿Qué decides?",
+                options: [
+                    { text: "Producir al 100% (Maximizar dinero)", eco: 30, soc: -10, nat: -30, next: 1 },
+                    { text: "Producir moderadamente (Equilibrio)", eco: 10, soc: 0, nat: -10, next: 1 }
+                ]
+            },
+            {
+                title: "Capítulo 2: El Río se Queja",
+                charName: "La Comunidad",
+                avatar: "👨🏽‍👩🏽‍👧🏽",
+                text: "Gerente [NAME], el río está lleno de desechos de tu planta. Los niños se están enfermando. ¡Necesitamos que hagas algo!",
+                options: [
+                    { text: "Ignorarlos, mi prioridad es la empresa.", eco: 10, soc: -30, nat: -20, next: 2 },
+                    { text: "Invertir en filtros de agua (Costo alto).", eco: -20, soc: 30, nat: 30, next: 2 }
+                ]
+            },
+            {
+                title: "Capítulo 3: Auditoría Ambiental",
+                charName: "El Estado (Ministerio de Ambiente)",
+                avatar: "🏛️",
+                isState: true, // ESTO ACTIVA EL DISEÑO OFICIAL
+                text: "RESOLUCIÓN N° 402. Estimado Gerente [NAME]. Se ha detectado una Externalidad Negativa por parte de su planta. Su nivel de Naturaleza está en [NAT]%.\n\nPara corregir esta falla de mercado, se impone un Impuesto Pigouviano calculado sobre el daño marginal causado. ¿Acepta la regulación?",
+                options: [
+                    { text: "Aceptar el impuesto y adaptar la planta.", eco: -15, soc: 20, nat: 25, next: 3 },
+                    { text: "Evadir impuestos (Buscar sobornos).", eco: 25, soc: -20, nat: -25, next: 3 }
+                ]
+            },
+            {
+                title: "Capítulo 4: Innovación",
+                charName: "Tu Ingeniero Jefe",
+                avatar: "👷🏽‍♂️",
+                text: "Jefe [NAME], con el impuesto encima, necesitamos cambiar. Podemos implementar un sistema agroforestal o usar químicos baratos.",
+                options: [
+                    { text: "Sistema Agroforestal (Sombra y árboles).", eco: -10, soc: 10, nat: 30, next: 4 },
+                    { text: "Químicos baratos para acelerar producción.", eco: 20, soc: -10, nat: -30, next: 4 }
+                ]
+            },
+            {
+                title: "Capítulo 5: El Sello Orgánico",
+                charName: "El Consumidor",
+                avatar: "🛒",
+                text: "Gerente [NAME], si obtiene la Certificación Orgánica y de Comercio Justo, estoy dispuesto a pagar el doble por su chocolate.",
+                options: [
+                    { text: "Pagar la certificación y mejorar procesos.", eco: 25, soc: 20, nat: 20, next: 5 },
+                    { text: "Es mucho papeleo, seguiré vendiendo barato.", eco: -10, soc: -5, nat: 0, next: 5 }
+                ]
+            },
+            {
+                title: "Capítulo 6: Pago por Servicios Ambientales",
+                charName: "El Estado (Autoridad Ambiental)",
+                avatar: "🏛️",
+                isState: true,
+                text: "NOTIFICACIÓN OFICIAL: Gerente [NAME], el gobierno ofrece un Pago por Servicios Ambientales (PSA) si conserva el bosque de ribera. Si no lo hace, se duplicará su tasa de impuesto.",
+                options: [
+                    { text: "Aceptar el PSA y conservar el bosque.", eco: 15, soc: 15, nat: 30, next: 6 },
+                    { text: "Talar el bosque para sembrar más cacao.", eco: 20, soc: -10, nat: -30, next: 6 }
+                ]
+            },
+            {
+                title: "Capítulo 7: Balance Final",
+                charName: "Junta Directiva",
+                avatar: "👔",
+                text: "Gerente [NAME], es momento de revisar los resultados del año. ¿Cómo queda nuestra empresa y el entorno?",
+                options: [
+                    { text: "Ver Resultados Finales", eco: 0, soc: 0, nat: 0, next: 7 }
+                ]
+            }
+        ];
+
+        // --- 4. FUNCIONES DE LÓGICA ---
+
+        function updateEnvironment() {
+            if (state.nat >= 70) {
+                ui.body.style.backgroundColor = "#064e3b";
+                ui.sceneContainer.style.background = "linear-gradient(180deg, #065f46, #022c22)";
+                ui.sceneContainer.style.borderColor = "#10b981";
+                ui.sceneIcon.innerText = "🌳";
+                ui.sceneIcon.style.transform = "scale(1.2)";
+            } else if (state.nat >= 40) {
+                ui.body.style.backgroundColor = "#0f172a";
+                ui.sceneContainer.style.background = "#0f172a";
+                ui.sceneContainer.style.borderColor = "#334155";
+                ui.sceneIcon.innerText = "🏞️";
+                ui.sceneIcon.style.transform = "scale(1)";
+            } else {
+                ui.body.style.backgroundColor = "#450a0a";
+                ui.sceneContainer.style.background = "linear-gradient(180deg, #7f1d1d, #450a0a)";
+                ui.sceneContainer.style.borderColor = "#ef4444";
+                ui.sceneIcon.innerText = "🏭";
+                ui.sceneIcon.style.transform = "scale(1.2)";
+            }
+        }
+
+        function updateBars() {
+            state.eco = Math.max(0, Math.min(100, state.eco));
+            state.soc = Math.max(0, Math.min(100, state.soc));
+            state.nat = Math.max(0, Math.min(100, state.nat));
+
+            ui.barEco.style.width = state.eco + '%';
+            ui.barSoc.style.width = state.soc + '%';
+            ui.barNat.style.width = state.nat + '%';
+
+            ui.barEco.style.background = state.eco < 30 ? '#ef4444' : '#10b981';
+            ui.barSoc.style.background = state.soc < 30 ? '#ef4444' : '#f97316';
+            ui.barNat.style.background = state.nat < 30 ? '#ef4444' : '#06b6d4';
+            
+            updateEnvironment();
+        }
+
+        function renderChapter() {
+            const data = storyData[state.chapter];
+            
+            // Reemplazar el [NAME] dinámicamente
+            let dynamicText = data.text.replace(/\[NAME\]/g, playerName);
+            // Reemplazar el [NAT] con el valor actual de naturaleza
+            dynamicText = dynamicText.replace(/\[NAT\]/g, state.nat);
+
+            ui.charName.innerText = data.charName;
+            ui.charAvatar.innerText = data.avatar;
+            ui.storyText.innerText = dynamicText;
+
+            // Aplicar estilo de documento oficial si es el Estado
+            if (data.isState) {
+                ui.charCard.classList.add('state-doc');
+            } else {
+                ui.charCard.classList.remove('state-doc');
+            }
+            
+            ui.charCard.style.animation = 'none';
+            ui.charCard.offsetHeight; 
+            ui.charCard.style.animation = 'slideIn 0.4s ease forwards';
+
+            ui.optionsContainer.innerHTML = '';
+            ui.btn.style.display = 'none';
+
+            data.options.forEach(option => {
+                const btn = document.createElement('button');
+                btn.className = 'decision-btn';
+                btn.innerText = option.text;
+                btn.onclick = () => makeDecision(option);
+                ui.optionsContainer.appendChild(btn);
+            });
+
+            ui.mainContent.scrollTop = 0;
+        }
+
+        function makeDecision(option) {
+            state.eco += option.eco;
+            state.soc += option.soc;
+            state.nat += option.nat;
+
+            updateBars();
+
+            const btns = ui.optionsContainer.querySelectorAll('.decision-btn');
+            btns.forEach(b => b.style.pointerEvents = 'none');
+
+            ui.btn.style.display = 'block';
+            ui.btn.innerText = "Continuar ➔";
+            
+            ui.btn.onclick = () => {
+                state.chapter = option.next;
+                if (state.chapter >= storyData.length) {
+                    showEndGame();
+                } else {
+                    renderChapter();
+                }
+            };
+        }
+
+        function showEndGame() {
+            ui.btn.style.display = 'none';
+            let title = ""; let finalMessage = "";
+            
+            if (state.eco > 60 && state.nat > 60 && state.soc > 60) {
+                title = "🏆 ¡Desarrollo Sostenible!";
+                finalMessage = `Felicidades, Gerente ${playerName}. Lograste un equilibrio perfecto. Tu empresa es rentable, la comunidad te apoya y el río está limpio. ¡Eres un Ingeniero Agroindustrial ejemplar!`;
+            } else if (state.eco > 70 && state.nat < 40) {
+                title = "💸 Rico, pero Destructivo";
+                finalMessage = `Gerente ${playerName}, ganaste mucho dinero, pero destruiste el río. El Estado te ha clausurado la planta por no cumplir con el Impuesto Pigouviano.`;
+            } else if (state.nat > 70 && state.eco < 40) {
+                title = "🌿 Héroe Ecológico en Banca Rota";
+                finalMessage = `Gerente ${playerName}, el río está hermoso, pero tu empresa quebró. La economía también es vital para el bienestar social.`;
+            } else {
+                title = "⚖️ Supervivencia";
+                finalMessage = `Gerente ${playerName}, lograste mantener la empresa a flote, pero no aprovechaste el potencial de la certificación o el PSA para maximizar el bienestar.`;
+            }
+
+            ui.header.style.display = 'none';
+            ui.charName.innerText = title;
+            ui.storyText.innerText = finalMessage;
+            ui.charAvatar.innerText = "📊";
+            ui.charCard.classList.remove('state-doc'); 
+            
+            ui.btn.innerText = "Jugar de Nuevo 🔄";
+            ui.btn.style.display = 'block';
+            ui.btn.onclick = () => location.reload();
+            
+            updateEnvironment();
+            ui.sceneIcon.innerText = "🌍";
+        }
+
+        // --- 5. INICIALIZACIÓN Y CONTROL DEL BOTÓN INICIAL ---
+        ui.btn.onclick = () => {
+            let inputName = ui.inputName.value.trim();
+            
+            // Validar que el usuario escriba un nombre
+            if (inputName === "") {
+                ui.inputName.style.borderColor = "var(--danger)";
+                ui.inputName.placeholder = "¡Escribe tu nombre aquí!";
+                return;
+            }
+
+            // Asignar nombre y pasar al juego
+            playerName = inputName;
+            ui.inputName.style.borderColor = "#334155"; // Resetear borde
+            
+            ui.intro.style.display = 'none'; // Ocultar intro
+            ui.header.style.display = 'block'; // Mostrar cabecera de barras
+            ui.gameUI.style.display = 'flex'; // Mostrar juego
+            ui.btn.innerText = "Continuar ➔";
+            
+            updateBars();
+            renderChapter();
+        };
+
+    </script>
+</body>
+</html>
